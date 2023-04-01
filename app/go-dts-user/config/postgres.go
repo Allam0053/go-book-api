@@ -28,6 +28,9 @@ type PostgresConfig struct {
 }
 
 func NewPostgresConn() (db *sql.DB) {
+	log.Println("================")
+	log.Println("CONNECTING TO DB 1")
+	log.Println("================")
 	db, err := sql.Open("postgres", postgresDSN())
 	if err != nil {
 		panic(err)
@@ -44,10 +47,16 @@ func NewPostgresConn() (db *sql.DB) {
 	if err := db.Ping(); err != nil {
 		panic(err)
 	}
+	log.Println("================================")
+	log.Println("successfully connect to Postgres 1")
+	log.Println("================================")
 	return
 }
 
 func NewPostgresGormConn() (db *gorm.DB) {
+	log.Println("================")
+	log.Println("CONNECTING TO DB")
+	log.Println("================")
 	// connect ke database menggunakan lib gorm
 	// https://gorm.io/docs/query.html
 
@@ -78,7 +87,9 @@ func NewPostgresGormConn() (db *gorm.DB) {
 	if err := dbSQL.Ping(); err != nil {
 		panic(err)
 	}
+	log.Println("================================")
 	log.Println("successfully connect to Postgres")
+	log.Println("================================")
 	return db
 }
 

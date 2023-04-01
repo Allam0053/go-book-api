@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Calmantara/go-dts-user/config"
+	"github.com/Calmantara/go-dts-user/module/router/v1/book"
 	"github.com/Calmantara/go-dts-user/module/router/v1/user"
 	"github.com/gin-gonic/gin"
 )
@@ -27,6 +28,7 @@ func NewHttpServer() {
 	// register router
 	v1 := ginServer.Group("/api/v1")
 	user.NewUserRouter(v1, hdls.userHdl)
+	book.NewBookRouter(v1, hdls.bookHdl)
 
 	ginServer.Run(fmt.Sprintf(":%v", config.Load.Server.Http.Port))
 }

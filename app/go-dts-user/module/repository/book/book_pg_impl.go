@@ -1,4 +1,4 @@
-package user
+package book
 
 import (
 	"context"
@@ -9,24 +9,23 @@ import (
 	"github.com/Calmantara/go-dts-user/module/model"
 )
 
-type UserPgRepoImpl struct {
+type BookPgRepoImpl struct {
 	db *sql.DB
 }
 
-func NewUserPgRepo(db *sql.DB) UserRepo {
-	return &UserPgRepoImpl{
+func NewBookPgRepo(db *sql.DB) BookRepo {
+	return &BookPgRepoImpl{
 		db: db,
 	}
 }
 
-func (u *UserPgRepoImpl) FindUserById(ctx context.Context, userId uint64) (user model.User, err error) {
+func (u *BookPgRepoImpl) FindBookById(ctx context.Context, bookId uint64) (book model.Book, err error) {
 	query := `
 		SELECT 
 			id, 
-			email, 
-			name,
-			dob
-		FROM users u
+			name_book, 
+			author
+		FROM books u
 		WHERE u.id = $1
 			AND deleted_at is null;
 	`
@@ -36,9 +35,9 @@ func (u *UserPgRepoImpl) FindUserById(ctx context.Context, userId uint64) (user 
 		return
 	}
 
-	rows, err := stmt.QueryContext(ctx, userId)
+	rows, err := stmt.QueryContext(ctx, bookId)
 	if err != nil {
-		if strings.Contains(err.Error(), "users_email_key") {
+		if strings.Contains(err.Error(), "books_email_key") {
 			err = errors.New("error duplication email")
 		}
 		return
@@ -47,26 +46,25 @@ func (u *UserPgRepoImpl) FindUserById(ctx context.Context, userId uint64) (user 
 
 	for rows.Next() {
 		// SCAN -> binding data ke golang struct
-		if err = rows.Scan(&user.Id, &user.Email, &user.Name, &user.Dob); err != nil {
+		if err = rows.Scan(&book.Id, &book.NameBook, &book.Author); err != nil {
 			return
 		}
 	}
 
-	if user.Id <= 0 {
-		err = errors.New("user is not found")
+	if book.Id <= 0 {
+		err = errors.New("book is not found")
 	}
 
 	return
 }
 
-func (u *UserPgRepoImpl) FindAllUsers(ctx context.Context) (users []model.User, err error) {
+func (u *BookPgRepoImpl) FindAllBooks(ctx context.Context) (books []model.Book, err error) {
 	query := `
 		SELECT 
 			id, 
-			email, 
-			name,
-			dob
-		FROM users u
+			name_book, 
+			author
+		FROM books u
 		WHERE deleted_at is null
 		ORDER BY created_at ASC;
 	`
@@ -82,26 +80,23 @@ func (u *UserPgRepoImpl) FindAllUsers(ctx context.Context) (users []model.User, 
 	defer rows.Close()
 
 	for rows.Next() {
-		var user model.User
-		if err = rows.Scan(&user.Id, &user.Email, &user.Name, &user.Dob); err != nil {
+		var book model.Book
+		if err = rows.Scan(&book.Id, &book.NameBook, &book.Author); err != nil {
 			return
 		}
-		users = append(users, user)
+		books = append(books, book)
 	}
 	return
 }
 
-func (u *UserPgRepoImpl) InsertUser(ctx context.Context, userIn model.User) (user model.User, err error) {
+func (u *BookPgRepoImpl) InsertBook(ctx context.Context, bookIn model.Book) (book model.Book, err error) {
 	query := `
-		INSERT INTO users
-				(name, email, dob)
+		INSERT INTO books
+				(name_book, author)
 		VALUES
-			($1, $2, $3 )
+			($1, $2 )
 		RETURNING 
-			id,
-			name,
-			email,
-			dob;
+			id, name_book, author;
 	`
 	// RETURNING akan mengeluarkan
 	// affected rows dari hasil query kita
@@ -111,29 +106,27 @@ func (u *UserPgRepoImpl) InsertUser(ctx context.Context, userIn model.User) (use
 	}
 
 	rows, err := stmt.QueryContext(ctx,
-		userIn.Name,
-		userIn.Email,
-		userIn.Dob)
+		bookIn.NameBook,
+		bookIn.Author)
 	if err != nil {
 		return
 	}
 
 	for rows.Next() {
-		if err = rows.Scan(&user.Id, &user.Email, &user.Name, &user.Dob); err != nil {
+		if err = rows.Scan(&book.Id, &book.NameBook, &book.Author); err != nil {
 			return
 		}
 	}
 	return
 }
 
-func (u *UserPgRepoImpl) UpdateUser(ctx context.Context, userIn model.User) (err error) {
+func (u *BookPgRepoImpl) UpdateBook(ctx context.Context, bookIn model.Book) (err error) {
 	query := `
-		UPDATE users
+		UPDATE books
 		SET
-			name  = $1,
-			email = $4,
-			dob   = $2
-		WHERE id = $3
+			name_book  = $2,
+			author = $3
+		WHERE id = $1
 			AND deleted_at is null;
 	`
 	stmt, err := u.db.PrepareContext(ctx, query)
@@ -142,10 +135,9 @@ func (u *UserPgRepoImpl) UpdateUser(ctx context.Context, userIn model.User) (err
 	}
 
 	res, err := stmt.ExecContext(ctx,
-		userIn.Name,
-		userIn.Dob,
-		userIn.Id,
-		userIn.Email)
+		bookIn.Id,
+		bookIn.NameBook,
+		bookIn.Author)
 	if err != nil {
 		return
 	}
@@ -155,24 +147,21 @@ func (u *UserPgRepoImpl) UpdateUser(ctx context.Context, userIn model.User) (err
 		return
 	}
 	if affected <= 0 {
-		err = errors.New("user is not found")
+		err = errors.New("book is not found")
 		return
 	}
 	return
 }
 
-func (u *UserPgRepoImpl) DeleteUserById(ctx context.Context, userId uint64) (user model.User, err error) {
+func (u *BookPgRepoImpl) DeleteBookById(ctx context.Context, bookId uint64) (book model.Book, err error) {
 	query := `
-		UPDATE users
+		UPDATE books
 		SET
 			deleted_at = now()
 		WHERE id = $1 
 			AND deleted_at is null
 		RETURNING 
-			id,
-			email,
-			name,
-			dob;
+			id, name_book, author;
 	`
 	stmt, err := u.db.PrepareContext(ctx, query)
 	if err != nil {
@@ -180,17 +169,17 @@ func (u *UserPgRepoImpl) DeleteUserById(ctx context.Context, userId uint64) (use
 	}
 
 	rows, err := stmt.QueryContext(ctx,
-		userId)
+		bookId)
 	if err != nil {
 		return
 	}
 	for rows.Next() {
-		if err = rows.Scan(&user.Id, &user.Email, &user.Name, &user.Dob); err != nil {
+		if err = rows.Scan(&book.Id, &book.NameBook, &book.Author); err != nil {
 			return
 		}
 	}
-	if user.Id <= 0 {
-		err = errors.New("user is not found")
+	if book.Id <= 0 {
+		err = errors.New("book is not found")
 	}
 	return
 }

@@ -8,11 +8,11 @@ dataSource:
   migrate: false
   postgres:
     master:
-      host: postgres
-      port: 25432
+      host: localhost
+      port: 5432
       dbName: user_management
       username: postgres
-      password: mysecretpassword
+      password: iloveTWICE9x
       maxIdleConnection: 10
       maxOpenConnection: 10
       maxIdleTime: 10

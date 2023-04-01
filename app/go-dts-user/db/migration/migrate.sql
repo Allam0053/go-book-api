@@ -35,6 +35,15 @@ CREATE TABLE user_photos_no_fk(
     deleted_at timestamptz
 );
 
+CREATE TABLE books(  
+    id serial NOT NULL PRIMARY KEY,
+    name_book text,
+    author VARCHAR(255),
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now(),
+    deleted_at timestamptz
+);
+
 -- ON DELETE CASCADE -> kalau data di user kedelete
 -- semua data yang berhubungan dengan user tersebut
 -- di table user_photos akan kedelete juga
