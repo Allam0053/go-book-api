@@ -1,5 +1,7 @@
 # DTS BATCH 7
 
+[![demo](https://img.youtube.com/vi/isFsEDRgGvE/0.jpg)](https://www.youtube.com/watch?v=isFsEDRgGvE)
+
 ```bash
 go get -u github.com/gin-gonic/gin
 go get -u github.com/lib/pq
